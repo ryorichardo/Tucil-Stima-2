@@ -1,2 +1,2 @@
 # Tucil-Stima-2
-Divide and Conquer
+Decrease and Conquer
