@@ -100,20 +100,24 @@ void delPrereq(matkul *M, char P[50]){
     // I.S. Matkul M, string P
     // F.S. Prereq pada matkul M dihapus jika bersesuaian dgn P
 
-
+    // Prekondisi: list prereq ada isinya
     if (M->list_prereq != NULL){
         alamat PQ = M->list_prereq;
-        if (strcmp(PQ->name, P) == 0){
+
+        // Menghapus prereq PQ jika elemen pertama
+        if (!strcmp(PQ->name, P)){
             M->list_prereq = PQ->next;
             PQ->next = NULL;
             M->count_prereq--;
             free(PQ);
         }
 
+        // Menghapus prereq PQ jika bukan elemen pertama
         else{
-            while (PQ->next != NULL && strcmp(PQ->next->name, P) != 0){
+            while (PQ->next != NULL && strcmp(PQ->next->name, P)){
                 PQ = PQ->next;
             }
+
             if (PQ->next != NULL){
                 alamat PK = PQ->next;
                 PQ->next = PK->next;
@@ -123,34 +127,6 @@ void delPrereq(matkul *M, char P[50]){
             }
         }
     }
-
-
-    // Mencari alamat prereq
-    //alamat MKb = M->list_prereq;
-    //int hasDel = 0;
-    //while (MKb!= NULL && !hasDel){
-//
-    //    // Jika prereq P adalah first element
-    //    if (strcmp(M->list_prereq->name, P) == 0){
-    //        M->list_prereq = MKb->next;
-    //        M->count_prereq--;
-    //        hasDel = 1;
-    //    }
-//
-    //    // Jika prereq P bukan first element
-    //    else if (MKb->next != NULL && strcmp(MKb->next->name, P) == 0){
-    //        alamat MD = MKb->next;
-    //        MKb->next = MD->next;
-    //        M->count_prereq--;
-    //        free(MD);
-    //        hasDel = 1;
-    //    }
-//
-    //    // Jika prereq P belum ditemukan
-    //    else{
-    //        MKb = MKb->next;
-    //    }
-    //}
 }
 
 void delMatkul(List *L, address M){
@@ -171,7 +147,7 @@ void delMatkul(List *L, address M){
     // Menghapus matkul M jika bukan elemen pertama
     else{
         address MKb = L->First;
-        while (strcmp(MKb->next->name, M->name) != 0){
+        while (strcmp(MKb->next->name, M->name)){
             MKb = MKb->next;
         }
         MKb->next = M->next;
@@ -258,58 +234,71 @@ void bacaFile(List *L, char namafile[100]){
     fclose(f);
 }
 
-void printString(char name[50]){
-    int i = 0;
-    while (name[i] != '\0'){
-        printf("%c", name[i]);
-        i++;
-    }
-}
 
+// MAIN PROGRAM //
 int main(){
+
+    // Inisialisasi variabel dan input
     char namafile[100] = "tc1.txt";
     List L;
+    List ToDel;
+    address M, MK;
     createEmpty(&L);
     bacaFile(&L, namafile);
-
-    /*
-    address M = L.First;
-    address MK;
-    while (M != NULL){
-        printf("%s: ", M->name);
-        alamat P = M->list_prereq;
-        while (P != NULL){
-            printf("%s ", P->name);
-            P = P->next;
-        }
-        M = M->next;
-    }
-
-    delMatkul(&L, L.First);
-    M = L.First;
-    while (M != NULL){
-        printf("%s", M->name);
-        M = M->next;
-    }*/
-
+    int found = 1;
     
+    // Proses sorting
     int i = 1;
-    while (L.First != NULL){
-        address M = L.First;
+    while (L.First != NULL && found){
+        found = 0;
+        M = L.First;
+        createEmpty(&ToDel);
         printf("Semester %d: ", i);
 
+        // Mencari matkul dengan jumlah prereq = 0 untuk dihapus
         while (M != NULL){
             if (M->count_prereq == 0){
-                printString(M->name);
-                delMatkul(&L, M);
-                M = NULL;
+
+                // Elemen pertama 
+                if (found == 0){
+                    printf("%s", M->name);
+                }
+
+                // Bukan elemen pertama
+                else{
+                    printf(", %s", M->name);
+                }
+
+                // Menambah matkul ke list matkul yang akan dihapus
+                MK = alokasiMatkul(M->name);
+                addMatkul(&ToDel, MK);
+                found++;
             }
-            else{
-                M = M->next;
+            M = M->next;
+        }
+
+        if (found){
+            MK = ToDel.First;
+            M = L.First;
+            while (MK != NULL){
+                while (M != NULL){
+                    if (!strcmp(M->name, MK->name)){
+                        delMatkul(&L, M);
+                        delMatkul(&ToDel, MK);
+                    }
+                    M = M->next;
+                }
+                MK = MK->next;
             }
         }
         printf("\n");
         i++;
     }
+
+    // Jika tidak ada matkul lain yang bisa diambil
+    if (!found){
+        printf("Proses tidak bisa diselesaikan karena tidak ada matkul lain yang bisa diambil.\n");
+    }
+
     return 0;
 }
