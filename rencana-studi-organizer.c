@@ -7,15 +7,34 @@
 #define true 1
 #define false 0
 
-
-// TIPE PREREQ, KONSTRUKTOR DAN DESTRUKTOR //
+// DEKLARASI TIPE PREREQ //
 typedef struct prereq *alamat;
 typedef struct prereq
 {
     char name[50];
     alamat next;
 } prereq;
+////////////////////////////
 
+
+// DEKLARASI TIPE MATKUL //
+typedef struct matkul *address;
+typedef struct matkul
+{
+    char name[50];          // Nama matkul
+    int count_prereq;       // Jumlah prereq matkul
+    alamat list_prereq;     // Array prereq
+    boolean delete_soon;    // 
+    address next;
+} matkul;
+
+typedef struct {
+	address First;
+} List;
+////////////////////////////
+
+
+// KONSTRUKTOR DAN DESTRUKTOR PREREQ //
 alamat alokasiPrereq(char name[50]){
     // I.S. String nama prereq
     // F.S. Terbentuk prereq P
@@ -86,21 +105,7 @@ void delPrereq(matkul *M, char P[50]){
 ////////////////////////////////////////////////////////////
 
 
-// TIPE MATKUL, KONSTRUKTOR, DAN DESTRUKTOR //
-typedef struct matkul *address;
-typedef struct matkul
-{
-    char name[50];          // Nama matkul
-    int count_prereq;       // Jumlah prereq matkul
-    alamat list_prereq;     // Array prereq
-    boolean delete_soon;    // 
-    address next;
-} matkul;
-
-typedef struct {
-	address First;
-} List;
-
+// KONSTRUKTOR DAN DESTRUKTOR MATKUL //
 void createEmpty(List *L){
     // I.S. List L
     // F.S. L.First menunjuk NULL
