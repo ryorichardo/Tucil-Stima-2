@@ -2,31 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+// boolean.h
+#define boolean unsigned char
+#define true 1
+#define false 0
+
+
+// TIPE PREREQ, KONSTRUKTOR DAN DESTRUKTOR //
 typedef struct prereq *alamat;
 typedef struct prereq
 {
     char name[50];
     alamat next;
 } prereq;
-
-typedef struct matkul *address;
-typedef struct matkul
-{
-    char name[50];            // Nama matkul
-    int count_prereq;       // Jumlah prereq matkul
-    alamat list_prereq;    // Array prereq
-    address next;
-} matkul;
-
-typedef struct {
-	address First;
-} List;
-
-void createEmpty(List *L){
-    // I.S. List L
-    // F.S. L.First menunjuk NULL
-    L->First = NULL;
-}
 
 alamat alokasiPrereq(char name[50]){
     // I.S. String nama prereq
@@ -38,20 +26,6 @@ alamat alokasiPrereq(char name[50]){
         P->next = NULL;
     }
     return P;
-}
-
-address alokasiMatkul(char name[50]){
-    // I.S. String nama matkul
-    // F.S. Terbentuk matkul M
-
-    address M = (address) malloc(sizeof(matkul));
-    if (M != NULL){
-        strcpy(M->name, name);
-        M->count_prereq = 0;
-        M->list_prereq = NULL;
-        M->next = NULL;
-    }
-    return M;
 }
 
 void addPrereq(matkul* M, alamat P){
@@ -75,25 +49,6 @@ void addPrereq(matkul* M, alamat P){
 
     // Menambah jumlah prereq
     M->count_prereq++;
-}
-
-void addMatkul(List* L, address M){
-    // I.S. List L, alamat matkul M
-    // F.S. Menambah M menjadi anggota L
-
-    // Jika L masih kosong
-    if (L->First == NULL){
-        L->First = M;
-    }
-
-    // Jika L sudah terisi
-    else{
-        address N = L->First;
-        while (N->next != NULL){
-            N = N->next;
-        }
-        N->next = M;
-    }
 }
 
 void delPrereq(matkul *M, char P[50]){
@@ -128,14 +83,76 @@ void delPrereq(matkul *M, char P[50]){
         }
     }
 }
+////////////////////////////////////////////////////////////
+
+
+// TIPE MATKUL, KONSTRUKTOR, DAN DESTRUKTOR //
+typedef struct matkul *address;
+typedef struct matkul
+{
+    char name[50];          // Nama matkul
+    int count_prereq;       // Jumlah prereq matkul
+    alamat list_prereq;     // Array prereq
+    boolean delete_soon;    // 
+    address next;
+} matkul;
+
+typedef struct {
+	address First;
+} List;
+
+void createEmpty(List *L){
+    // I.S. List L
+    // F.S. L.First menunjuk NULL
+    L->First = NULL;
+}
+
+address alokasiMatkul(char name[50]){
+    // I.S. String nama matkul
+    // F.S. Terbentuk matkul M
+
+    address M = (address) malloc(sizeof(matkul));
+    if (M != NULL){
+        strcpy(M->name, name);
+        M->count_prereq = 0;
+        M->list_prereq = NULL;
+        M->delete_soon = false;
+        M->next = NULL;
+    }
+    return M;
+}
+
+void addMatkul(List* L, address M){
+    // I.S. List L, alamat matkul M
+    // F.S. Menambah M menjadi anggota L
+
+    // Jika L masih kosong
+    if (L->First == NULL){
+        L->First = M;
+    }
+
+    // Jika L sudah terisi
+    else{
+        address N = L->First;
+        while (N->next != NULL){
+            N = N->next;
+        }
+        N->next = M;
+    }
+}
 
 void delMatkul(List *L, address M){
     // I.S. List matkul L, alamat matkul M
     // F.S. Matkul M dihapus dari list, matkul lain yg prereqnya M dihapus dgn prosedur delPrereq
 
     // Memanggil prosedur delPrereq untuk semua matkul
-    address MK = L->First;
+    address MKb, MK = L->First;
     while (MK != NULL){
+
+        // Menyimpan address matkul sebelum M
+        if (MK->next != NULL && !strcmp(MK->next->name, M->name)){
+            MKb = MK;
+        }
         delPrereq(MK, M->name);
         MK = MK->next;
     }
@@ -146,28 +163,25 @@ void delMatkul(List *L, address M){
     }
     // Menghapus matkul M jika bukan elemen pertama
     else{
-        address MKb = L->First;
-        while (strcmp(MKb->next->name, M->name)){
-            MKb = MKb->next;
-        }
         MKb->next = M->next;
         M->next = NULL;
     }
-    //free(M);
 }
+///////////////////////////////////////////////////////////////////
 
+
+// FUNGSI MEMBACA FILE //
 void bacaFile(List *L, char namafile[100]){
     // I.S. List kosong L, string namafile
     // F.S. Membaca file dan menyalinnya menjadi list L
 
-    // CONSTANT LIST
+    // Kamus konstanta
     #define splitter ','
     #define stopper '.'
-    #define mark '!'
     #define blank ' '
     #define enter '\n'
 
-    // OPEN FILE
+    // Membuka file
     FILE *f;
     f = fopen(namafile, "r");
     if (f == NULL){
@@ -175,84 +189,92 @@ void bacaFile(List *L, char namafile[100]){
         exit(1);
     }
 
-    // READ FILE
+    // Membaca file
     char c;
-    int retval = fscanf(f, "%c", &c);
+    c = getc(f);
 
-    // stop reading if mark
-    while (c != mark){
+    // EOF
+    while (c != EOF){
 
-        // init count: bedain mk biasa dgn prereq
+        // Var count berfungsi membedakan matkul dgn prereqnya
         int count = 0;
         address MK;
 
-        // reset count if stopper
-        while (c != stopper && c != mark){
+        // Membaca tiap matkul
+        while (c != stopper){
 
-            // buffer to store word
+            // Inisialisasi tempat penyimpanan kata
             char name[50];
             int i = 0;
 
-            // remove blank or enter
+            // Membuang blank atau enter
             while (c == blank || c == enter){
-                retval = fscanf(f, "%c", &c);
+                c = getc(f);
             }
 
-            // read until splitter
-            while (c != splitter && c != stopper && c != mark){
+            // Membaca dan memisahkan matkul dan prereqnya
+            while (c != splitter && c != stopper){
                 name[i] = c;
                 i++;
-                retval = fscanf(f, "%c", &c);
+                c = getc(f);
             }
             name[i] = '\0';
 
-            // count = 0 -> mk
+            // Jika count = 0, maka adalah matkul
             if (count == 0){
                 MK = alokasiMatkul(name);
             }
-
-            // count > 0 -> prereq
+            // Jika count > 0, maka adalah prereq
             else{
                 alamat MP = alokasiPrereq(name);
                 addPrereq(MK, MP);
             }
 
-            // increment
+            // Next element
             count++; 
             if (c == splitter){
-                retval = fscanf(f, "%c", &c);
+                c = getc(f);
             }
         }
 
-        // add MK to array of matkul M
+        // Menambah MK ke list L
         addMatkul(L, MK);
-        
+
+        // Next element
         if (c == stopper){
-            retval = fscanf(f, "%c", &c);
+            c = getc(f);
         }
+    }
+
+    // Jika terjadi kesalahan pada getc()
+    if (!feof(f)){
+        printf("Terjadi kesalahan pada proses pembacaan file.\n");
     }
     fclose(f);
 }
+////////////////////////////////////////////////////////////////////
 
 
 // MAIN PROGRAM //
 int main(){
+    // KAMUS DAN DEKLARASI VARIABEL //
+    char namafile[100] = "tc2.txt";     // Letak file yang akan dibuka
+    int i = 1;                          // Counter semester ke-i
+    int found = 1;                      // Counter ditemukan matkul tanpa prereq
+    List L;                             // List matkul
+    address M;                          // Variabel penyimpanan matkul
 
-    // Inisialisasi variabel dan input
-    char namafile[100] = "tc1.txt";
-    List L;
-    List ToDel;
-    address M, MK;
+
+    // ALGORITMA PROGRAM UTAMA //
+
+    // Inisialisasi
     createEmpty(&L);
     bacaFile(&L, namafile);
-    int found = 1;
     
     // Proses sorting
-    int i = 1;
     while (L.First != NULL && found){
         found = 0;
         M = L.First;
-        createEmpty(&ToDel);
         printf("Semester %d: ", i);
 
         // Mencari matkul dengan jumlah prereq = 0 untuk dihapus
@@ -270,25 +292,22 @@ int main(){
                 }
 
                 // Menambah matkul ke list matkul yang akan dihapus
-                MK = alokasiMatkul(M->name);
-                addMatkul(&ToDel, MK);
+                M->delete_soon = true;
                 found++;
             }
             M = M->next;
         }
 
+        // Jika terdapat matkul yang akan dihapus
         if (found){
-            MK = ToDel.First;
             M = L.First;
-            while (MK != NULL){
-                while (M != NULL){
-                    if (!strcmp(M->name, MK->name)){
-                        delMatkul(&L, M);
-                        delMatkul(&ToDel, MK);
-                    }
-                    M = M->next;
+
+            // Menghapus matkul yang sudah ditandai
+            while (M != NULL){
+                if (M->delete_soon){
+                    delMatkul(&L, M);
                 }
-                MK = MK->next;
+                M = M->next;
             }
         }
         printf("\n");
