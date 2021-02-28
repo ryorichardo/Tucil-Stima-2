@@ -1,0 +1,7 @@
+Matematika.
+Fisika Dasar.
+Dasar Pemrograman.
+Strategi Algoritma, Matematika Diskrit.
+Alstrukdat, Dasar Pemrograman.
+Matematika Diskrit, Matematika.
+OOP, Alstrukdat.

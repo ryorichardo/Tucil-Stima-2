@@ -1,0 +1,14 @@
+m.
+n.
+o, n, p.
+p.
+q, m, n.
+r, m, o, s.
+s, o, p.
+t, q, u.
+u, n, r.
+v, o, y.
+w, v.
+x, m, v.
+y, r.
+z, p, w.

@@ -1,3 +1,6 @@
+// RENCANA STUDI ORGANIZER //
+// Author: Ryo Richardo //
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,8 +14,8 @@
 typedef struct prereq *alamat;
 typedef struct prereq
 {
-    char name[50];
-    alamat next;
+    char name[50];          // Nama prereq
+    alamat next;            // Next element
 } prereq;
 ////////////////////////////
 
@@ -22,10 +25,9 @@ typedef struct matkul *address;
 typedef struct matkul
 {
     char name[50];          // Nama matkul
-    int count_prereq;       // Jumlah prereq matkul
     alamat list_prereq;     // Array prereq
-    boolean delete_soon;    // 
-    address next;
+    boolean delete_soon;    // Matkul akan dihapus
+    address next;           // Next element
 } matkul;
 
 typedef struct {
@@ -65,9 +67,6 @@ void addPrereq(matkul* M, alamat P){
         }
         Last->next = P;
     }
-
-    // Menambah jumlah prereq
-    M->count_prereq++;
 }
 
 void delPrereq(matkul *M, char P[50]){
@@ -82,7 +81,6 @@ void delPrereq(matkul *M, char P[50]){
         if (!strcmp(PQ->name, P)){
             M->list_prereq = PQ->next;
             PQ->next = NULL;
-            M->count_prereq--;
             free(PQ);
         }
 
@@ -96,7 +94,6 @@ void delPrereq(matkul *M, char P[50]){
                 alamat PK = PQ->next;
                 PQ->next = PK->next;
                 PK->next = NULL;
-                M->count_prereq--;
                 free(PK);
             }
         }
@@ -119,7 +116,6 @@ address alokasiMatkul(char name[50]){
     address M = (address) malloc(sizeof(matkul));
     if (M != NULL){
         strcpy(M->name, name);
-        M->count_prereq = 0;
         M->list_prereq = NULL;
         M->delete_soon = false;
         M->next = NULL;
@@ -169,7 +165,6 @@ void delMatkul(List *L, address M){
     // Menghapus matkul M jika bukan elemen pertama
     else{
         MKb->next = M->next;
-        M->next = NULL;
     }
 }
 ///////////////////////////////////////////////////////////////////
@@ -206,7 +201,7 @@ void bacaFile(List *L, char namafile[100]){
         address MK;
 
         // Membaca tiap matkul
-        while (c != stopper){
+        while (c != stopper && c != EOF){
 
             // Inisialisasi tempat penyimpanan kata
             char name[50];
@@ -218,7 +213,7 @@ void bacaFile(List *L, char namafile[100]){
             }
 
             // Membaca dan memisahkan matkul dan prereqnya
-            while (c != splitter && c != stopper){
+            while (c != splitter && c != stopper && c != EOF){
                 name[i] = c;
                 i++;
                 c = getc(f);
@@ -263,7 +258,8 @@ void bacaFile(List *L, char namafile[100]){
 // MAIN PROGRAM //
 int main(){
     // KAMUS DAN DEKLARASI VARIABEL //
-    char namafile[100] = "tc2.txt";     // Letak file yang akan dibuka
+    char namafile[100] = "../test/";    // Letak file yang akan dibuka
+    char input[50];                     // variabel penyimpanan input
     int i = 1;                          // Counter semester ke-i
     int found = 1;                      // Counter ditemukan matkul tanpa prereq
     List L;                             // List matkul
@@ -272,7 +268,10 @@ int main(){
 
     // ALGORITMA PROGRAM UTAMA //
 
-    // Inisialisasi
+    // Inisialisasi dan Input
+    printf("Masukkan nama file dalam folder test: ");
+    scanf("%s", input);
+    strcat(namafile, input);
     createEmpty(&L);
     bacaFile(&L, namafile);
     
@@ -280,15 +279,14 @@ int main(){
     while (L.First != NULL && found){
         found = 0;
         M = L.First;
-        printf("Semester %d: ", i);
 
-        // Mencari matkul dengan jumlah prereq = 0 untuk dihapus
+        // Mencari matkul yang tidak memiliki prereq untuk dihapus
         while (M != NULL){
-            if (M->count_prereq == 0){
+            if (M->list_prereq == NULL){
 
                 // Elemen pertama 
                 if (found == 0){
-                    printf("%s", M->name);
+                    printf("Semester %d: %s", i, M->name);
                 }
 
                 // Bukan elemen pertama
