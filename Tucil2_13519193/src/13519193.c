@@ -321,6 +321,7 @@ int main(){
     if (!found){
         printf("Proses tidak bisa diselesaikan karena tidak ada matkul lain yang bisa diambil.\n");
     }
-
+    
+    while(1);      // Silahkan hapus line ini jika ingin menjalankan dengan compiler
     return 0;
 }
